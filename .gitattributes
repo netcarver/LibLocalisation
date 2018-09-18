@@ -1,0 +1,5 @@
+# Prevent export of certain files and directories...
+TODO.md             export-ignore
+
+# Prevent export of any tests.
+Tests/            export-ignore
