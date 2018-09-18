@@ -10,6 +10,12 @@ See the LICENSE.txt file for license terms.
 - No changes.
 
 
+## Version [0.1.1] - 2018-09-18
+
+[Diff from 0.1.0]
+
+- Bump version.
+
 
 ## Version [0.1.0] - 2018-09-18
 
@@ -17,5 +23,6 @@ See the LICENSE.txt file for license terms.
 
 [Keep a Changelog]: http://keepachangelog.com/en/1.0.0/
 [Upcoming]: https://github.com/netcarver/LibLocalisation/compare/1.0.1...HEAD
-[Diff from 0.1.0]: https://github.com/netcarver/LibLocalisation/compare/0.1.0...0.2.0#diff
+[0.1.1]: https://github.com/netcarver/LibLocalisation/tree/0.1.1/
+[Diff from 0.1.0]: https://github.com/netcarver/LibLocalisation/compare/0.1.0...0.1.1#diff
 [0.1.0]: https://github.com/netcarver/LibLocalisation/tree/0.1.0/
