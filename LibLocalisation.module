@@ -246,6 +246,11 @@ class LibLocalisation extends WireData implements Module
 
     /**
      * TODO Add convenience method to get lang from http request header
+     *
+     * Possible options...
+     *
+     * PHP's intl module's locale_from_accept_http() method.
+     * Negotiation library: https://github.com/willdurand/Negotiation
      */
 
 
