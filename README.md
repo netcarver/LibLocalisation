@@ -28,9 +28,7 @@ To create a localisation for a particular locale, first create a new instance an
 
     $de_DE = wire('modules')->get('LibLocalisation')->setLocale('de_DE');
 
-You can now use your locale to get information about countries, currencies and languages as they are used in that
-locale. For example, to ouptut the names of various countries you use the _country()_ method, passing in an ISO3166
-country code...
+You can now use your locale to get information about countries, currencies and languages as they are used in that locale. For example, to output the names of various countries you use the _country()_ method, passing in an [ISO 3166-2](https://en.wikipedia.org/wiki/ISO_3166-1) country code...
 
     echo $de_DE->country('CH'); // Outputs "Schweiz" - the German for Switzerland.
     echo $de_DE->country('AU'); // Outputs "Australien" - the German for Australia.
@@ -44,10 +42,12 @@ To access currency data, you call the _currency()_ method, passing in the curren
 
 This returns an array of data about GBP - localised in German...
 
-   [ digits => 2,
-     number => "826",
-     symbol => "£",
-     name => "Britisches Pfund Sterling" ]
+    [
+    digits => 2,
+    number => "826",
+    symbol => "£",
+    name => "Britisches Pfund Sterling"
+    ]
 
 Finally, you can output localised language names by calling the _language()_ method and giving it a language code.
 
