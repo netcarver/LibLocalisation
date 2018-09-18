@@ -15,7 +15,7 @@ class LibLocalisation extends WireData implements Module
         return array(
             'title'     => __('Localisation library'),
             'summary'   => __('Contains localisations for currency, language and countries.'),
-            'version'   => '0.0.1',
+            'version'   => '0.1.0',
             'permanent' => false,
             'singular'  => false,
             'autoload'  => false,
