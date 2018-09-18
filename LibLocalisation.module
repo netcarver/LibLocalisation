@@ -1,0 +1,345 @@
+<?php namespace ProcessWire;
+
+/**
+ * Copyright 2014-2018 Netcarver.
+ */
+
+class LibLocalisation extends WireData implements Module
+{
+    protected static $cache = array();
+    protected $locale       = null;
+    protected $base_lang    = '';
+
+
+    public static function getModuleInfo() {
+        return array(
+            'title'     => __('Localisation library'),
+            'summary'   => __('Contains localisations for currency, language and countries.'),
+            'version'   => '0.0.1',
+            'permanent' => false,
+            'singular'  => false,
+            'autoload'  => false,
+            'className' => 'LibLocalisation',
+            'requires'  => 'PHP>=5.6, ProcessWire>=3.0.98',
+            'icon'      => 'comment-o',
+        );
+    }
+
+
+
+
+    /**
+     * Instantiates a localisation with the given locale.
+     */
+    public function setLocale($locale = 'en_GB') {
+        if (!is_string($locale) || '' == $locale || false === self::checkString($locale)) {
+            throw new \Exception(__('Please provide a well formed locale name when creating a new localisation.'));
+        }
+        $this->locale = $locale;
+
+        if (!isset(self::$cache[$locale])) {
+            self::$cache[$locale] = array();
+        }
+
+        $this->base_lang = self::localeToLang($locale);
+
+        return $this;
+    }
+
+
+    /**
+     *
+     */
+    public function init() {
+    }
+
+
+    /**
+     * Attempt to use the called method as an index into the data directory and pull out country/currency/language
+     * information.
+     *
+     * $ja  = wire('modules')->get('LibLocalisation')->setLocale('ja_JP');
+     * $japanese_for_US_country          = $ja->country('US');
+     * $japanese_for_GBP_currency        = $ja->currency('GBP');           // returns an array
+     * echo $japanese_for_GBP_currency['name'];                            // Show the name
+     * $japanese_symbol_for_GBP_currency = $ja->currency('GBP', 'symbol'); // Returns the symbol
+     * $japanese_for_french_language     = $ja->language('fr');            // NB. Case of the key is important.
+     */
+    public function __call($data, $args) {
+        $locale = $this->locale;
+        if (empty($args)) {
+            throw new \Exception(__('Please provide a key for that data.'));
+        } // TODO Allow calls with no index? If so, return the entire array of indexed data?
+
+
+        // Check the accessed data is in whitelist...
+        if (!in_array($data, ['country', 'language', 'currency'])) {
+            return '';
+        }
+
+
+        $info = self::accessData($locale, $this->base_lang, $data, $args[0]);
+        if (null !== $info) {
+            if (isset($args[1]) && is_string($args[1]) && is_array($info)) {
+                $info = isset($info[$args[1]]) ? $info[$args[1]] : '';
+            }
+
+            return $info;
+        }
+
+        return '';
+    }
+
+
+    /**
+     * Sanity check the strings used to make up paths.
+     */
+    protected static function checkString($string) {
+        if (!is_string($string) || '' == $string) {
+            // Invalid or empty string found
+            return false;
+        }
+
+        if (strlen($string) > 128) {
+            // String too long for interpolating into file paths.
+            return false;
+        }
+
+        if (false !== strpos($string, "\0")) {
+            // String contains embedded null characters. Hack attempt?
+            return false;
+        }
+
+        $len1 = strlen($string);
+        $string = preg_replace('/[^a-zA-Z_]/', '', $string);  // sanitise input
+        $len2 = strlen($string);
+        if ($len1 !== $len2) {
+            // String may be being abused for lfi or rfi attack so reject it.
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Creates the path to the localisation resource.
+     */
+    protected static function makeLocalePath($locale, $data) {
+        if (!self::checkString($locale) || !self::checkString($data)) {
+            return false;
+        }
+
+        $root = __DIR__;
+        $path = "$root/data/$locale/$data.php";
+        $path = realpath($path);
+        return $path;
+    }
+
+
+    /**
+     * Looks up the requested data.
+     *
+     * In the case of looking up a language from a locale we fallback to pulling the base language from the locale.
+     */
+    protected static function accessData($locale, $base_lang, $data, $key) {
+
+        /**
+         * Is the data in the cache?
+         */
+        if (!isset(self::$cache[$locale][$data])) {
+            /**
+             * No, not in the cache. Build the merged data array and cache it...
+             */
+            $base = array(); // holds common data for the requested type that is independent of lang and area (locale)
+            $lang = array(); // holds data for requested type that is common across locales using this language
+            $diff = array(); // holds locale-specific diffs from the common entries
+
+            $base_path = self::makeLocalePath('common', $data);
+            if (file_exists($base_path) && is_readable($base_path)) {
+                $base = include($base_path);
+            }
+
+            $lang_path = self::makeLocalePath($base_lang, $data);
+            if (file_exists($lang_path) && is_readable($lang_path)) {
+                $lang = include($lang_path);
+            }
+
+            if (strtolower($locale) != strtolower($base_lang)) {
+                $diff_path = self::makeLocalePath($locale, $data);
+                if (file_exists($diff_path) && is_readable($diff_path)) {
+                    $diff = include($diff_path);
+                    $lang = array_replace_recursive($lang, $diff);
+                }
+            }
+
+            /**
+             * Populate cache entry
+             */
+            self::$cache[$locale][$data] = array_replace_recursive($base, $lang);
+        }
+
+
+        /**
+         * Read from cache
+         */
+        $base = self::$cache[$locale][$data];
+
+
+        /**
+         * Pull requested data from found info.
+         */
+        if (null === $key || '' == $key) {
+            /**
+             * Nothing specific requested so return all of it.
+             */
+            return $base;
+        } else if (isset($base[$key])) {
+            /**
+             * A specific piece of existing data is being indexed so return it.
+             */
+            return $base[$key];
+        } else {
+            if ('language' == $data) {
+                $lang = self::localeToLang($key);
+                if (isset($base[$lang])) {
+                    return $base[$lang];
+                }
+            }
+
+            /**
+             * Indexed data doesn't exist.
+             */
+            return null;
+        }
+    }
+
+
+
+    /**
+     *
+     */
+    public static function localeToLang($locale) {
+        $lang = str_replace('-', '_', $locale);
+        $lang = explode('_', $lang);
+        $lang = strtolower($lang[0]);
+        return $lang;
+    }
+
+
+    /**
+     *
+     */
+    protected static $region_to_locale_irregular_mappings = array(
+        'AU' => 'en_AU',
+        'CN' => 'zh_CN',
+        'GB' => 'en_GB',
+        'US' => 'en_US',
+        'JP' => 'ja_JP',
+        'SE' => 'sv_SE',
+    );
+
+
+
+
+
+
+    /**
+     * TODO Add convenience method to get lang from http request header
+     */
+
+
+
+    /**
+     * Lists all supported locales
+     */
+    static public function listLocales() {
+        // TODO
+    }
+
+
+
+    /**
+     * TODO Add a currency formatter
+     */
+
+
+
+    /**
+     * TODO Add a number formatter
+     */
+
+
+
+    /**
+     * TODO Add method returning all countries in the locale of the class instance
+     */
+
+
+    /**
+     * TODO Add method returning all currencies in the locale of the class instance
+     */
+
+
+    /**
+     * TODO Add method returning all languages in the locale of the class instance
+     */
+
+
+    /**
+     * TODO Add method returning all countries in their native language
+     */
+
+
+
+    /**
+     * TODO Add method returning all currencies in their native language
+     */
+
+
+    /**
+     * TODO Add method returning all languages in their native language
+     */
+
+
+    /**
+     * TODO Add a quick country/currency/language selector inputfield/fieldtype for PW
+     */
+
+
+
+    /**
+     * Converts a country code to it's primary locale.
+     *
+     * Some countries have a code that matches their language code (like Portugal 'PT' and Portugeuse 'pt')
+     * Many do not. This method attempts to construct a locale from a given country code/locale & also normalises it.
+     */
+    public static function countryToLocale($country) {
+        $locale = '';
+        $country = str_replace('-', '_', $country);
+        if (self::checkString($country)) {
+            $country = preg_replace('[^a-zA-Z_]', '', $country);
+            $country = strtoupper($country);
+
+            if (array_key_exists($country, self::$region_to_locale_irregular_mappings)) {
+                $locale = self::$region_to_locale_irregular_mappings[strtoupper($country)]; // 'gb' => 'en_GB' etc.
+            } else {
+                $parts = explode('_', $locale);
+                $count = count($parts);
+                if($count == 2) {
+                    $lang = strtolower($parts[0]);
+                    $reg  = strtoupper($parts[1]);
+                    $locale = $lang . '_' . $reg;
+
+                    $locale = $country; // Looks like it is already OK.
+                } else if ($count == 1) {
+                    $lang = strtolower($parts[0]);
+                    $reg  = strtoupper($parts[0]); // Yes, index zero. So 'PT' => 'pt_PT', 'it' => 'it_IT' etc.
+                    $locale = $lang . '_' . $reg;
+                }
+            }
+        }
+
+        return $locale;
+    }
+}
