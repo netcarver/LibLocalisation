@@ -10,6 +10,13 @@ See the LICENSE.txt file for license terms.
 - Update Readme file.
 
 
+## Version [0.1.2] - 2018-09-20
+
+[Diff from 0.1.1]
+
+- Bugfix in countryToLocale().
+
+
 ## Version [0.1.1] - 2018-09-18
 
 [Diff from 0.1.0]
@@ -22,7 +29,9 @@ See the LICENSE.txt file for license terms.
 - Initial packaging as a module suite for ProcessWire.
 
 [Keep a Changelog]: http://keepachangelog.com/en/1.0.0/
-[Upcoming]: https://github.com/netcarver/LibLocalisation/compare/1.0.1...HEAD
+[Upcoming]: https://github.com/netcarver/LibLocalisation/compare/0.1.2...HEAD
+[0.1.2]: https://github.com/netcarver/LibLocalisation/tree/0.1.2/
+[Diff from 0.1.1]: https://github.com/netcarver/LibLocalisation/compare/0.1.1...0.1.2#diff
 [0.1.1]: https://github.com/netcarver/LibLocalisation/tree/0.1.1/
 [Diff from 0.1.0]: https://github.com/netcarver/LibLocalisation/compare/0.1.0...0.1.1#diff
 [0.1.0]: https://github.com/netcarver/LibLocalisation/tree/0.1.0/

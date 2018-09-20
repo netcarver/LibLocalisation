@@ -15,7 +15,7 @@ class LibLocalisation extends WireData implements Module
         return array(
             'title'     => __('Localisation library'),
             'summary'   => __('Contains localisations for currency, language and countries.'),
-            'version'   => '0.1.1',
+            'version'   => '0.1.2',
             'permanent' => false,
             'singular'  => false,
             'autoload'  => false,
@@ -329,7 +329,7 @@ class LibLocalisation extends WireData implements Module
             if (array_key_exists($country, self::$region_to_locale_irregular_mappings)) {
                 $locale = self::$region_to_locale_irregular_mappings[strtoupper($country)]; // 'gb' => 'en_GB' etc.
             } else {
-                $parts = explode('_', $locale);
+                $parts = explode('_', $country);
                 $count = count($parts);
                 if($count == 2) {
                     $lang = strtolower($parts[0]);
